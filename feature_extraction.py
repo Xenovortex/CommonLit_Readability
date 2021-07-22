@@ -20,6 +20,10 @@ def sentence_statistics(df_sentence):
     # count words
     df_stats["num_words"] = df_sentence.str.split().str.len()
 
+    # count letters
+    df_stats["num_letters"] = df_sentence.str.count(r"\w")
+    
+
 
 def preprocessing(df_sentence):
 

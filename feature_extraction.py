@@ -37,6 +37,14 @@ def sentence_statistics(df_sentence):
     df_stats["num_polysyllables_3"] = df_sentence.apply(count_polysyllables, args=(3,))
     df_stats["num_polysyllables_5"] = df_sentence.apply(count_polysyllables, args=(5,))
 
+    # count long words
+    df_stats["num_long_3"] = df_sentence.apply(count_long_words, args=(3,))
+    df_stats["num_long_5"] = df_sentence.apply(count_long_words, args=(5,))
+    df_stats["num_long_8"] = df_sentence.apply(count_long_words, args=(8,))
+    df_stats["num_long_10"] = df_sentence.apply(count_long_words, args=(10,))
+    df_stats["num_long_15"] = df_sentence.apply(count_long_words, args=(15,))
+
+
     return df_stats
 
 
@@ -139,6 +147,23 @@ def count_polysyllables(sentence, threshold=2):
             polysyllables += 1
     return polysyllables
 
+
+def count_long_words(sentence, threshold):
+    """Count words in a sentence that have equal or more letters than the threshold
+
+    Args:
+        sentence ([string]): string that represent a sentence
+        threshold ([int]): threshold for number of letters in a word for it to classify as a long word
+
+    Returns:
+        [int]: number of words in the input sentence that have more letters than the threshold
+    """
+    long_words = 0
+    words = sentence.split()
+    for word in words:
+        if len(word) >= threshold:
+            long_words += 1
+    return long_words
 
 
 def preprocessing(df_sentence):

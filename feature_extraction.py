@@ -32,6 +32,11 @@ def sentence_statistics(df_sentence):
     # count monosyllabic words 
     df_stats["num_monosyllables"] = df_sentence.apply(count_monosyllables)
 
+    # count polysyllabic words
+    df_stats["num_polysyllables_2"] = df_sentence.apply(count_polysyllables, args=(2,))
+    df_stats["num_polysyllables_3"] = df_sentence.apply(count_polysyllables, args=(3,))
+    df_stats["num_polysyllables_5"] = df_sentence.apply(count_polysyllables, args=(5,))
+
     return df_stats
 
 
@@ -72,7 +77,7 @@ def count_monosyllables(sentence):
     """Count monosyllabic words in a sentence
 
     Args:
-        sentence -- string that represent a sentence
+        sentence ([string]): string that represent a sentence
 
     Returns:
         [int]: number of monosyllabic words in the input sentence
@@ -99,6 +104,41 @@ def count_monosyllables(sentence):
         if word_syllables == 1:
             monosyllables += 1
     return monosyllables
+
+
+def count_polysyllables(sentence, threshold=2):
+    """Count polysyllabic words that have equal or more syllables than the threshold
+
+    Args:
+        sentence ([string]): string that represent a sentence
+        threshold ([int], optional): syllable threshold for polysyllabic words to consider
+    
+    Returns:
+        [int]: number of polysyllabic words in the input sentence with more syllables than the threshold
+    """
+    cc_pattern = re.compile("[^aeiouyäöü]{2,}")
+    polysyllables = 0
+    words = sentence.split()
+    for word in words:
+        word_syllables = 1
+        current_pos = len(word) - 1
+        while current_pos >= 0:
+            current_character = word[current_pos]
+            current_pos -= 1
+            if current_character in "aeiouyäöü":
+                if current_pos <= 0:
+                    break
+                else:
+                    current_character = word[current_pos]
+                    if current_character not in "aeiouyäöü":
+                        word_syllables += 1
+                    current_pos -= 1
+        if cc_pattern.match(word) and len(word) > 2:
+            word_syllables -= 1
+        if word_syllables >= threshold:
+            polysyllables += 1
+    return polysyllables
+
 
 
 def preprocessing(df_sentence):

@@ -14,6 +14,12 @@ def sentence_statistics(df_sentence):
     # count comma
     df_stats["num_comma"] = df_sentence.str.count(",")
 
+    # preprocessing
+    df_sentence = preprocessing(df_sentence)
+
+    # count words
+    df_stats["num_words"] = df_sentence.str.split().str.len()
+
 
 def preprocessing(df_sentence):
 

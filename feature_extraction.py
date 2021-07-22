@@ -22,10 +22,50 @@ def sentence_statistics(df_sentence):
 
     # count letters
     df_stats["num_letters"] = df_sentence.str.count(r"\w")
-    
+
+
+
+def count_syllables(sentence):
+    """Count the number of syllables in a sentence
+
+    Args:
+        sentence ([string]): string that represent a sentence
+
+    Returns: 
+        [int]: number of syllables in the input sentence
+    """
+    cc_pattern = re.compile("[^aeiouyäöü]{2,}")
+    sentence_syllables = 0
+    words = sentence.split()
+    for word in words:
+        word_syllables = 1
+        current_pos = len(word) - 1
+        while current_pos >= 0:
+            current_character = word[current_pos]
+            current_pos -= 1
+            if current_character in "aeiouyäöü":
+                if current_pos <= 0:
+                    break
+                else:
+                    current_character = word[current_pos]
+                    if current_character not in "aeiouyäöü":
+                        word_syllables += 1
+                    current_pos -= 1
+        if cc_pattern.match(word) and len(word) > 2:
+            word_syllables -= 1
+        sentence_syllables += word_syllables
+    return sentence_syllables
 
 
 def preprocessing(df_sentence):
+    """Perform basic preprocessing such as lower casing, removing numbers, punctuations and multiple whitespaces. 
+
+    Args:
+        df_sentence ([dataframe]): Pandas dataframe column with sentences
+
+    Returns:
+        [dataframe]: Pandas dataframe column with preprocessed sentences
+    """
 
     # lower case
     df_sentence = df_sentence.str.lower()

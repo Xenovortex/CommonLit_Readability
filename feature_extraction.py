@@ -27,12 +27,15 @@ def preprocessing(df_sentence):
     df_sentence = df_sentence.apply(lambda x: re.sub(r"\-", " ", x))
     df_sentence = df_sentence.apply(lambda x: re.sub(r"[^\w\s]", "", x))
 
+    # reduce multiple whitespace to one whitespace
+    df_sentence = df_sentence.apply(lambda x: re.sub(r"\s+", " ", x))
+
     return df_sentence
 
 
 if __name__ == "__main__":
-    test_sentence = pd.DataFrame(data=[["This is test-sentence number 1 with a comma ,."],
-                                  ["This is test-sentence number ?!?! 2 with more numbers 21353215."]],
+    test_sentence = pd.DataFrame(data=[["This is    test-sentence number 1 with a comma ,."],
+                                  ["This is test-sentence    number ?!?! 2 with more numbers 21353215."]],
                                   columns=["sentences"])
 
     print(preprocessing(test_sentence.sentences))

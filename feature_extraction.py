@@ -6,6 +6,9 @@ def sentence_statistics(df_sentence):
 
     Args:
         df_sentence ([dataframe]): Pandas dataframe column with sentences
+
+    Returns:
+        [dictionary]: python dictionary containing all computed statistics
     """
 
     # init dataframe
@@ -22,6 +25,14 @@ def sentence_statistics(df_sentence):
 
     # count letters
     df_stats["num_letters"] = df_sentence.str.count(r"\w")
+
+    # count syllables
+    df_stats["num_syllables"] = df_sentence.apply(count_syllables)
+
+    # count monosyllabic words 
+    df_stats["num_monosyllables"] = df_sentence.apply(count_monosyllables)
+
+    return df_stats
 
 
 
@@ -57,6 +68,39 @@ def count_syllables(sentence):
     return sentence_syllables
 
 
+def count_monosyllables(sentence):
+    """Count monosyllabic words in a sentence
+
+    Args:
+        sentence -- string that represent a sentence
+
+    Returns:
+        [int]: number of monosyllabic words in the input sentence
+    """
+    cc_pattern = re.compile("[^aeiouyäöü]{2,}")
+    monosyllables = 0
+    words = sentence.split()
+    for word in words:
+        word_syllables = 1
+        current_pos = len(word) - 1
+        while current_pos >= 0:
+            current_character = word[current_pos]
+            current_pos -= 1
+            if current_character in "aeiouyäöü":
+                if current_pos <= 0:
+                    break
+                else:
+                    current_character = word[current_pos]
+                    if current_character not in "aeiouyäöü":
+                        word_syllables += 1
+                    current_pos -= 1
+        if cc_pattern.match(word) and len(word) > 2:
+            word_syllables -= 1
+        if word_syllables == 1:
+            monosyllables += 1
+    return monosyllables
+
+
 def preprocessing(df_sentence):
     """Perform basic preprocessing such as lower casing, removing numbers, punctuations and multiple whitespaces. 
 
@@ -88,6 +132,6 @@ if __name__ == "__main__":
                                   ["This is test-sentence    number ?!?! 2 with more numbers 21353215."]],
                                   columns=["sentences"])
 
-    print(preprocessing(test_sentence.sentences))
+    print(sentence_statistics(test_sentence.sentences))
 
 

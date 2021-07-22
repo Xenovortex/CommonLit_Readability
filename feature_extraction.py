@@ -12,13 +12,29 @@ def sentence_statistics(df_sentence):
     df_stats = pd.DataFrame()
 
     # count comma
-    df_stats["num_comma"] = sentence.str.count(",")
+    df_stats["num_comma"] = df_sentence.str.count(",")
 
 
 def preprocessing(df_sentence):
 
     # lower case
-    sentence = sentence.str.lower()
+    df_sentence = df_sentence.str.lower()
 
     # remove numbers
+    df_sentence = df_sentence.apply(lambda x: re.sub(r"\d", "", x))
+
+    # remove punctuations
+    df_sentence = df_sentence.apply(lambda x: re.sub(r"\-", " ", x))
+    df_sentence = df_sentence.apply(lambda x: re.sub(r"[^\w\s]", "", x))
+
+    return df_sentence
+
+
+if __name__ == "__main__":
+    test_sentence = pd.DataFrame(data=[["This is test-sentence number 1 with a comma ,."],
+                                  ["This is test-sentence number ?!?! 2 with more numbers 21353215."]],
+                                  columns=["sentences"])
+
+    print(preprocessing(test_sentence.sentences))
+
 

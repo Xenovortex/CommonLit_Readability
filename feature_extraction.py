@@ -53,6 +53,11 @@ def sentence_statistics(df_text):
     # Flesch-Kincaid Grade Level Formula (https://en.wikipedia.org/wiki/Flesch%E2%80%93Kincaid_readability_tests)
     df_stats["flesch_grade_level"] = 0.39 * (df_stats["num_words"] / df_stats["num_sentences"]) + 11.8 * (df_stats["num_syllables"] / df_stats["num_words"]) - 15.59
 
+    # Flesch formular Farr, Jenkins and Patterson modification (https://en.wikipedia.org/wiki/Readability)
+    df_stats["flesch_modified"] = 1.599 * (df_stats["num_monosyllables"] * 100 / df_stats["num_words"]) - 1.015 * (df_stats["num_words"] / df_stats["num_sentences"]) - 31.517
+
+    # 
+
     return df_stats
 
 

@@ -64,6 +64,9 @@ def sentence_statistics(df_text):
     df_stats["dale_chall_score"] = 0.1579 * (df_stats["num_not_dale_chall"] * 100 / df_stats["num_words"]) + 0.0496 * (df_stats["num_words"] / df_stats["num_sentences"])
     df_stats.loc[(df_stats["num_not_dale_chall"] / df_stats["num_words"]) > 0.05, "dale_chall_score"] += 3.6365
 
+    # Gunning fog index (https://en.wikipedia.org/wiki/Gunning_fog_index)
+    df_stats["gunning_fog"] = 0.4 * ( (df_stats["num_words"] / df_stats["num_sentences"]) + 100 * (df_stats["num_polysyllables_3"] / df_stats["num_words"]) )
+
     return df_stats
 
 

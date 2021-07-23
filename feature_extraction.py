@@ -1,11 +1,11 @@
 import pandas as pd
 import re
 
-def sentence_statistics(df_sentence):
+def sentence_statistics(df_text):
     """[summary]
 
     Args:
-        df_sentence ([dataframe]): Pandas dataframe column with sentences
+        df_sentence ([dataframe]): Pandas dataframe column with text paragraphs
 
     Returns:
         [dictionary]: python dictionary containing all computed statistics
@@ -15,52 +15,55 @@ def sentence_statistics(df_sentence):
     df_stats = pd.DataFrame()
 
     # count comma
-    df_stats["num_comma"] = df_sentence.str.count(",")
+    df_stats["num_comma"] = df_text.str.count(",")
+
+    # count number of sentences
+    df_stats["num_sentences"] = df_text.str.count(".") + df_text.str.count("?") + df_text.str.count("!")
 
     # preprocessing
-    df_sentence = preprocessing(df_sentence)
+    df_text = preprocessing(df_text)
 
     # count words
-    df_stats["num_words"] = df_sentence.str.split().str.len()
+    df_stats["num_words"] = df_text.str.split().str.len()
 
     # count letters
-    df_stats["num_letters"] = df_sentence.str.count(r"\w")
+    df_stats["num_letters"] = df_text.str.count(r"\w")
 
     # count syllables
-    df_stats["num_syllables"] = df_sentence.apply(count_syllables)
+    df_stats["num_syllables"] = df_text.apply(count_syllables)
 
     # count monosyllabic words 
-    df_stats["num_monosyllables"] = df_sentence.apply(count_monosyllables)
+    df_stats["num_monosyllables"] = df_text.apply(count_monosyllables)
 
     # count polysyllabic words
-    df_stats["num_polysyllables_2"] = df_sentence.apply(count_polysyllables, args=(2,))
-    df_stats["num_polysyllables_3"] = df_sentence.apply(count_polysyllables, args=(3,))
-    df_stats["num_polysyllables_5"] = df_sentence.apply(count_polysyllables, args=(5,))
+    df_stats["num_polysyllables_2"] = df_text.apply(count_polysyllables, args=(2,))
+    df_stats["num_polysyllables_3"] = df_text.apply(count_polysyllables, args=(3,))
+    df_stats["num_polysyllables_5"] = df_text.apply(count_polysyllables, args=(5,))
 
     # count long words
-    df_stats["num_long_3"] = df_sentence.apply(count_long_words, args=(3,))
-    df_stats["num_long_5"] = df_sentence.apply(count_long_words, args=(5,))
-    df_stats["num_long_8"] = df_sentence.apply(count_long_words, args=(8,))
-    df_stats["num_long_10"] = df_sentence.apply(count_long_words, args=(10,))
-    df_stats["num_long_15"] = df_sentence.apply(count_long_words, args=(15,))
+    df_stats["num_long_3"] = df_text.apply(count_long_words, args=(3,))
+    df_stats["num_long_5"] = df_text.apply(count_long_words, args=(5,))
+    df_stats["num_long_8"] = df_text.apply(count_long_words, args=(8,))
+    df_stats["num_long_10"] = df_text.apply(count_long_words, args=(10,))
+    df_stats["num_long_15"] = df_text.apply(count_long_words, args=(15,))
 
 
     return df_stats
 
 
 
-def count_syllables(sentence):
-    """Count the number of syllables in a sentence
+def count_syllables(text):
+    """Count the number of syllables in a text paragraph
 
     Args:
-        sentence ([string]): string that represent a sentence
+        text ([string]): string that represent a text paragraph
 
     Returns: 
-        [int]: number of syllables in the input sentence
+        [int]: number of syllables in the input text paragraph
     """
     cc_pattern = re.compile("[^aeiouyäöü]{2,}")
     sentence_syllables = 0
-    words = sentence.split()
+    words = text.split()
     for word in words:
         word_syllables = 1
         current_pos = len(word) - 1
@@ -81,18 +84,18 @@ def count_syllables(sentence):
     return sentence_syllables
 
 
-def count_monosyllables(sentence):
-    """Count monosyllabic words in a sentence
+def count_monosyllables(text):
+    """Count monosyllabic words in a text paragraph
 
     Args:
-        sentence ([string]): string that represent a sentence
+        text ([string]): string that represent a text paragraph
 
     Returns:
-        [int]: number of monosyllabic words in the input sentence
+        [int]: number of monosyllabic words in the input text paragraph
     """
     cc_pattern = re.compile("[^aeiouyäöü]{2,}")
     monosyllables = 0
-    words = sentence.split()
+    words = text.split()
     for word in words:
         word_syllables = 1
         current_pos = len(word) - 1
@@ -114,19 +117,19 @@ def count_monosyllables(sentence):
     return monosyllables
 
 
-def count_polysyllables(sentence, threshold=2):
+def count_polysyllables(text, threshold=2):
     """Count polysyllabic words that have equal or more syllables than the threshold
 
     Args:
-        sentence ([string]): string that represent a sentence
+        text ([string]): string that represent a text paragraph
         threshold ([int], optional): syllable threshold for polysyllabic words to consider
     
     Returns:
-        [int]: number of polysyllabic words in the input sentence with more syllables than the threshold
+        [int]: number of polysyllabic words in the input text paragraph with more syllables than the threshold
     """
     cc_pattern = re.compile("[^aeiouyäöü]{2,}")
     polysyllables = 0
-    words = sentence.split()
+    words = text.split()
     for word in words:
         word_syllables = 1
         current_pos = len(word) - 1
@@ -148,48 +151,48 @@ def count_polysyllables(sentence, threshold=2):
     return polysyllables
 
 
-def count_long_words(sentence, threshold):
-    """Count words in a sentence that have equal or more letters than the threshold
+def count_long_words(text, threshold):
+    """Count words in a text paragraph that have equal or more letters than the threshold
 
     Args:
-        sentence ([string]): string that represent a sentence
+        text ([string]): string that represent a text paragraph
         threshold ([int]): threshold for number of letters in a word for it to classify as a long word
 
     Returns:
-        [int]: number of words in the input sentence that have more letters than the threshold
+        [int]: number of words in the input text paragraph that have more letters than the threshold
     """
     long_words = 0
-    words = sentence.split()
+    words = text.split()
     for word in words:
         if len(word) >= threshold:
             long_words += 1
     return long_words
 
 
-def preprocessing(df_sentence):
+def preprocessing(df_text):
     """Perform basic preprocessing such as lower casing, removing numbers, punctuations and multiple whitespaces. 
 
     Args:
-        df_sentence ([dataframe]): Pandas dataframe column with sentences
+        df_text ([dataframe]): Pandas dataframe column with text paragraphs
 
     Returns:
-        [dataframe]: Pandas dataframe column with preprocessed sentences
+        [dataframe]: Pandas dataframe column with preprocessed text paragraphs
     """
 
     # lower case
-    df_sentence = df_sentence.str.lower()
+    df_text = df_text.str.lower()
 
     # remove numbers
-    df_sentence = df_sentence.apply(lambda x: re.sub(r"\d", "", x))
+    df_text = df_text.apply(lambda x: re.sub(r"\d", "", x))
 
     # remove punctuations
-    df_sentence = df_sentence.apply(lambda x: re.sub(r"\-", " ", x))
-    df_sentence = df_sentence.apply(lambda x: re.sub(r"[^\w\s]", "", x))
+    df_text = df_text.apply(lambda x: re.sub(r"\-", " ", x))
+    df_text = df_text.apply(lambda x: re.sub(r"[^\w\s]", "", x))
 
     # reduce multiple whitespace to one whitespace
-    df_sentence = df_sentence.apply(lambda x: re.sub(r"\s+", " ", x))
+    df_text = df_text.apply(lambda x: re.sub(r"\s+", " ", x))
 
-    return df_sentence
+    return df_text
 
 
 if __name__ == "__main__":

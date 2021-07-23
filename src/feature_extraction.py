@@ -19,10 +19,7 @@ def sentence_statistics(df_text):
     df_stats["num_comma"] = df_text.str.count(",")
 
     # count number of sentences
-    df_stats["num_periods"] = df_text.str.count(".") 
-    df_stats["num_question_mark"] = df_text.str.count("\?") 
-    df_stats["num_exclamation_mark"] = df_text.str.count("!")
-    df_stats["num_sentences"] = df_stats["num_periods"] + df_stats["num_question_mark"] + df_stats["num_exclamation_mark"]
+    df_stats["num_sentences"] = df_text.str.count(".") + df_text.str.count("\?") + df_text.str.count("!")
 
     # preprocessing
     df_text = preprocessing(df_text)
@@ -61,7 +58,11 @@ def sentence_statistics(df_text):
     df_stats["flesch_modified"] = 1.599 * (df_stats["num_monosyllables"] * 100 / df_stats["num_words"]) - 1.015 * (df_stats["num_words"] / df_stats["num_sentences"]) - 31.517
 
     # count words not in Dale Chall wordlist
-    df_stats["num_not_Dale_Chall"] = df_text.apply(count_dale_chall)
+    df_stats["num_not_dale_chall"] = df_text.apply(count_dale_chall)
+    
+    # Dale-Chall formula (https://en.wikipedia.org/wiki/Dale%E2%80%93Chall_readability_formula)
+    df_stats["dale_chall_score"] = 0.1579 * (df_stats["num_not_dale_chall"] * 100 / df_stats["num_words"]) + 0.0496 * (df_stats["num_words"] / df_stats["num_sentences"])
+    df_stats.loc[(df_stats["num_not_dale_chall"] / df_stats["num_words"]) > 0.05, "dale_chall_score"] += 3.6365
 
     return df_stats
 
@@ -196,13 +197,13 @@ def count_dale_chall(text):
 
     # load Dale Chall wordlist
     path = join(dirname(dirname(abspath(__file__))), "corpus", "Dale-Chall-wordlist-3000.txt")
-    dale_chall_wordlist = [line.rstrip("\n") for line in open(path)]
+    dale_chall_wordlist = [line.rstrip("\n").lower() for line in open(path)]
 
     # count words not in Dale Chall wordlist
     words = text.split()
     difficult_words = 0
     for word in words:
-        if word in dale_chall_wordlist:
+        if word not in dale_chall_wordlist:
             difficult_words += 1
 
     return difficult_words
@@ -237,7 +238,8 @@ def preprocessing(df_text):
 
 if __name__ == "__main__":
     test_sentence = pd.DataFrame(data=[["This is    test-sentence number 1 with a comma ,."],
-                                  ["This is test-sentence    number ?!?! 2 with more numbers 21353215."]],
+                                  ["This is test-sentence    number ?!?! 2 with more numbers 21353215."],
+                                  ["homomorphism"], ["a"]],
                                   columns=["sentences"])
 
     print(sentence_statistics(test_sentence.sentences))

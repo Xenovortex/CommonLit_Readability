@@ -47,6 +47,10 @@ def sentence_statistics(df_text):
     df_stats["num_long_10"] = df_text.apply(count_long_words, args=(10,))
     df_stats["num_long_15"] = df_text.apply(count_long_words, args=(15,))
 
+    # Flesch-reading ease (https://en.wikipedia.org/wiki/Flesch%E2%80%93Kincaid_readability_tests)
+    df_stats["flesch_reading_ease"] = 206.835 - 1.015 * (df_stats["num_words"] / df_stats["num_sentences"]) - 84.6 * (df_stats["num_syllables"] / df_stats["num_words"])
+
+
 
     return df_stats
 

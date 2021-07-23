@@ -1,6 +1,6 @@
-from os.path import abspath, dirname, join
 import pandas as pd
 import re
+import textstat
 
 def sentence_statistics(df_text):
     """[summary]
@@ -19,7 +19,7 @@ def sentence_statistics(df_text):
     df_stats["num_comma"] = df_text.str.count(",")
 
     # count number of sentences
-    df_stats["num_sentences"] = df_text.str.count(".") + df_text.str.count("\?") + df_text.str.count("!")
+    df_stats["num_sentences"] = df_text.apply(textstat.sentence_count)
 
     # preprocessing
     df_text = preprocessing(df_text)
@@ -48,28 +48,36 @@ def sentence_statistics(df_text):
     df_stats["num_long_10"] = df_text.apply(count_long_words, args=(10,))
     df_stats["num_long_15"] = df_text.apply(count_long_words, args=(15,))
 
-    # Flesch-reading ease (https://en.wikipedia.org/wiki/Flesch%E2%80%93Kincaid_readability_tests)
-    df_stats["flesch_reading_ease"] = 206.835 - 1.015 * (df_stats["num_words"] / df_stats["num_sentences"]) - 84.6 * (df_stats["num_syllables"] / df_stats["num_words"])
+    # Flesch-reading ease 
+    df_stats["flesch_reading_ease"] = df_text.apply(textstat.flesch_reading_ease)
 
-    # Flesch-Kincaid Grade Level Formula (https://en.wikipedia.org/wiki/Flesch%E2%80%93Kincaid_readability_tests)
-    df_stats["flesch_grade_level"] = 0.39 * (df_stats["num_words"] / df_stats["num_sentences"]) + 11.8 * (df_stats["num_syllables"] / df_stats["num_words"]) - 15.59
+    # Flesch-Kincaid Grade Level Formula 
+    df_stats["flesch_grade_level"] = df_text.apply(textstat.flesch_kincaid_grade)
 
-    # Flesch formular Farr, Jenkins and Patterson modification (https://en.wikipedia.org/wiki/Readability)
-    df_stats["flesch_modified"] = 1.599 * (df_stats["num_monosyllables"] * 100 / df_stats["num_words"]) - 1.015 * (df_stats["num_words"] / df_stats["num_sentences"]) - 31.517
+    # Gunning fog index
+    df_stats["gunning_fog"] = df_text.apply(textstat.gunning_fog)
 
-    # count words not in Dale Chall wordlist
-    df_stats["num_not_dale_chall"] = df_text.apply(count_dale_chall)
-    
-    # Dale-Chall formula (https://en.wikipedia.org/wiki/Dale%E2%80%93Chall_readability_formula)
-    df_stats["dale_chall_score"] = 0.1579 * (df_stats["num_not_dale_chall"] * 100 / df_stats["num_words"]) + 0.0496 * (df_stats["num_words"] / df_stats["num_sentences"])
-    df_stats.loc[(df_stats["num_not_dale_chall"] / df_stats["num_words"]) > 0.05, "dale_chall_score"] += 3.6365
+    # SMOG Index
+    df_stats["SMOG_index"] = df_text.apply(textstat.smog_index)
 
-    # Gunning fog index (https://en.wikipedia.org/wiki/Gunning_fog_index)
-    df_stats["gunning_fog"] = 0.4 * ( (df_stats["num_words"] / df_stats["num_sentences"]) + 100 * (df_stats["num_polysyllables_3"] / df_stats["num_words"]) )
+    # Automated Readability Index
+    df_stats["ARI"] = df_text.apply(textstat.automated_readability_index)
+
+    # Coleman-Liau Index
+    df_stats["coleman_liau"] = df_text.apply(textstat.coleman_liau_index)
+
+    # Linsear Write Formular
+    df_stats["linsear_write"] = df_text.apply(textstat.linsear_write_formula)
+
+    # Dale Chall Readability
+    df_stats["dale_chall"] = df_text.apply(textstat.dale_chall_readability_score)
+
+    # Readability Consensus
+    df_stats["combined_score"] = df_text.apply(textstat.text_standard, args=(True,))
 
     return df_stats
 
-
+# TODO: use https://pypi.org/project/textstat/
 
 def count_syllables(text):
     """Count the number of syllables in a text paragraph
@@ -187,29 +195,6 @@ def count_long_words(text, threshold):
             long_words += 1
     return long_words
 
-
-def count_dale_chall(text):
-    """Count words that are not in the Dale Chall 3000-wordlist
-
-    Args:
-        text ([string]): string that represent a text paragraph
-
-    Returns:
-        [int]: number of words not in the Dale Chall wordlist
-    """
-
-    # load Dale Chall wordlist
-    path = join(dirname(dirname(abspath(__file__))), "corpus", "Dale-Chall-wordlist-3000.txt")
-    dale_chall_wordlist = [line.rstrip("\n").lower() for line in open(path)]
-
-    # count words not in Dale Chall wordlist
-    words = text.split()
-    difficult_words = 0
-    for word in words:
-        if word not in dale_chall_wordlist:
-            difficult_words += 1
-
-    return difficult_words
 
 
 

@@ -21,32 +21,11 @@ def sentence_statistics(df_text):
     # count number of sentences
     df_stats["num_sentences"] = df_text.apply(textstat.sentence_count)
 
-    # preprocessing
-    df_text = preprocessing(df_text)
-
     # count words
-    df_stats["num_words"] = df_text.str.split().str.len()
-
-    # count letters
-    df_stats["num_letters"] = df_text.str.count(r"\w")
+    df_stats["num_words"] = df_text.apply(textstat.lexicon_count)
 
     # count syllables
-    df_stats["num_syllables"] = df_text.apply(count_syllables)
-
-    # count monosyllabic words 
-    df_stats["num_monosyllables"] = df_text.apply(count_monosyllables)
-
-    # count polysyllabic words
-    df_stats["num_polysyllables_2"] = df_text.apply(count_polysyllables, args=(2,))
-    df_stats["num_polysyllables_3"] = df_text.apply(count_polysyllables, args=(3,))
-    df_stats["num_polysyllables_5"] = df_text.apply(count_polysyllables, args=(5,))
-
-    # count long words
-    df_stats["num_long_3"] = df_text.apply(count_long_words, args=(3,))
-    df_stats["num_long_5"] = df_text.apply(count_long_words, args=(5,))
-    df_stats["num_long_8"] = df_text.apply(count_long_words, args=(8,))
-    df_stats["num_long_10"] = df_text.apply(count_long_words, args=(10,))
-    df_stats["num_long_15"] = df_text.apply(count_long_words, args=(15,))
+    df_stats["num_syllables"] = df_text.apply(textstat.syllable_count)
 
     # Flesch-reading ease 
     df_stats["flesch_reading_ease"] = df_text.apply(textstat.flesch_reading_ease)
@@ -75,126 +54,13 @@ def sentence_statistics(df_text):
     # Readability Consensus
     df_stats["combined_score"] = df_text.apply(textstat.text_standard, args=(True,))
 
+    # preprocessing
+    df_text = preprocessing(df_text)
+
+    # count letters
+    df_stats["num_letters"] = df_text.str.count(r"\w")
+
     return df_stats
-
-# TODO: use https://pypi.org/project/textstat/
-
-def count_syllables(text):
-    """Count the number of syllables in a text paragraph
-
-    Args:
-        text ([string]): string that represent a text paragraph
-
-    Returns: 
-        [int]: number of syllables in the input text paragraph
-    """
-    cc_pattern = re.compile("[^aeiouyäöü]{2,}")
-    sentence_syllables = 0
-    words = text.split()
-    for word in words:
-        word_syllables = 1
-        current_pos = len(word) - 1
-        while current_pos >= 0:
-            current_character = word[current_pos]
-            current_pos -= 1
-            if current_character in "aeiouyäöü":
-                if current_pos <= 0:
-                    break
-                else:
-                    current_character = word[current_pos]
-                    if current_character not in "aeiouyäöü":
-                        word_syllables += 1
-                    current_pos -= 1
-        if cc_pattern.match(word) and len(word) > 2:
-            word_syllables -= 1
-        sentence_syllables += word_syllables
-    return sentence_syllables
-
-
-def count_monosyllables(text):
-    """Count monosyllabic words in a text paragraph
-
-    Args:
-        text ([string]): string that represent a text paragraph
-
-    Returns:
-        [int]: number of monosyllabic words in the input text paragraph
-    """
-    cc_pattern = re.compile("[^aeiouyäöü]{2,}")
-    monosyllables = 0
-    words = text.split()
-    for word in words:
-        word_syllables = 1
-        current_pos = len(word) - 1
-        while current_pos >= 0:
-            current_character = word[current_pos]
-            current_pos -= 1
-            if current_character in "aeiouyäöü":
-                if current_pos <= 0:
-                    break
-                else:
-                    current_character = word[current_pos]
-                    if current_character not in "aeiouyäöü":
-                        word_syllables += 1
-                    current_pos -= 1
-        if cc_pattern.match(word) and len(word) > 2:
-            word_syllables -= 1
-        if word_syllables == 1:
-            monosyllables += 1
-    return monosyllables
-
-
-def count_polysyllables(text, threshold=2):
-    """Count polysyllabic words that have equal or more syllables than the threshold
-
-    Args:
-        text ([string]): string that represent a text paragraph
-        threshold ([int], optional): syllable threshold for polysyllabic words to consider
-    
-    Returns:
-        [int]: number of polysyllabic words in the input text paragraph with more syllables than the threshold
-    """
-    cc_pattern = re.compile("[^aeiouyäöü]{2,}")
-    polysyllables = 0
-    words = text.split()
-    for word in words:
-        word_syllables = 1
-        current_pos = len(word) - 1
-        while current_pos >= 0:
-            current_character = word[current_pos]
-            current_pos -= 1
-            if current_character in "aeiouyäöü":
-                if current_pos <= 0:
-                    break
-                else:
-                    current_character = word[current_pos]
-                    if current_character not in "aeiouyäöü":
-                        word_syllables += 1
-                    current_pos -= 1
-        if cc_pattern.match(word) and len(word) > 2:
-            word_syllables -= 1
-        if word_syllables >= threshold:
-            polysyllables += 1
-    return polysyllables
-
-
-def count_long_words(text, threshold):
-    """Count words in a text paragraph that have equal or more letters than the threshold
-
-    Args:
-        text ([string]): string that represent a text paragraph
-        threshold ([int]): threshold for number of letters in a word for it to classify as a long word
-
-    Returns:
-        [int]: number of words in the input text paragraph that have more letters than the threshold
-    """
-    long_words = 0
-    words = text.split()
-    for word in words:
-        if len(word) >= threshold:
-            long_words += 1
-    return long_words
-
 
 
 

@@ -1,5 +1,7 @@
 import pandas as pd
 import re
+import nltk
+from collections import Counter
 import textstat
 
 def sentence_statistics(df_text):
@@ -15,8 +17,8 @@ def sentence_statistics(df_text):
     # init dataframe
     df_stats = pd.DataFrame()
 
-    # count comma
-    df_stats["num_comma"] = df_text.str.count(",")
+    # reduce multiple whitespace to one whitespace
+    df_text = df_text.apply(lambda x: re.sub(r"\s+", " ", x))
 
     # count number of sentences
     df_stats["num_sentences"] = df_text.apply(textstat.sentence_count)
@@ -54,48 +56,53 @@ def sentence_statistics(df_text):
     # Readability Consensus
     df_stats["combined_score"] = df_text.apply(textstat.text_standard, args=(True,))
 
-    # preprocessing
-    df_text = preprocessing(df_text)
+    # lower case
+    df_text = df_text.str.lower()
 
-    # count letters
-    df_stats["num_letters"] = df_text.str.count(r"\w")
+    # Count POS tags
+    df_tokens = df_text.apply(nltk.word_tokenize)
+    df_pos = df_tokens.apply(nltk.pos_tag)
+    df_pos_stats = count_POS_tag(df_pos)
+    df_stats = pd.concat([df_stats, df_pos_stats], axis=1)
+
 
     return df_stats
 
 
-
-def preprocessing(df_text):
-    """Perform basic preprocessing such as lower casing, removing numbers, punctuations and multiple whitespaces. 
+def count_POS_tag(df_pos):
+    """Count how often each POS tag occurs
 
     Args:
-        df_text ([dataframe]): Pandas dataframe column with text paragraphs
+        df_pos ([dataframe]): dataframe, where the entries are list of tuples (token, POS tag) 
 
     Returns:
-        [dataframe]: Pandas dataframe column with preprocessed text paragraphs
+        df_pos_stats ([dataframe]): dataframe containing POS tag statistics
     """
 
-    # lower case
-    df_text = df_text.str.lower()
+    # POS tag list
+    tag_lst = ['CC', 'CD', 'DT', 'EX', 'FW', 'IN', 'JJ', 'JJR', 'JJS', 'LS', 'MD', 'NN', 'NNS', 'NNP', 'NNPS', 
+               'PDT', 'POS', 'PRP', 'PRP$', 'RB', 'RBR', 'RBS', 'RP', 'SYM', 'TO', 'UH', 'VB', 'VBD', 'VBG',
+               'VBN', 'VBP', 'VBZ', 'WDT', 'WP', 'WP$', 'WRB', '$', "''", '(', ')', ',', '.', ':', '``'] 
+    
+    # init dataframe
+    df_pos_stats = pd.DataFrame(0, index=range(len(df_pos)), columns=tag_lst)
 
-    # remove numbers
-    df_text = df_text.apply(lambda x: re.sub(r"\d", "", x))
+    # count POS tag
+    for index, pos in enumerate(df_pos):
+        count_dict = Counter(tag for _, tag in pos)
+        for tag, count in count_dict.items():
+            if tag in tag_lst: 
+                df_pos_stats.loc[index, tag] = count
 
-    # remove punctuations
-    df_text = df_text.apply(lambda x: re.sub(r"\-", " ", x))
-    df_text = df_text.apply(lambda x: re.sub(r"[^\w\s]", "", x))
-
-    # reduce multiple whitespace to one whitespace
-    df_text = df_text.apply(lambda x: re.sub(r"\s+", " ", x))
-
-    return df_text
+    return df_pos_stats
 
 
 if __name__ == "__main__":
     test_sentence = pd.DataFrame(data=[["This is    test-sentence number 1 with a comma ,."],
                                   ["This is test-sentence    number ?!?! 2 with more numbers 21353215."],
-                                  ["homomorphism"], ["a"]],
+                                  ["homomorphism"], ["--"], ['"""_-()[],--?!:$;...``']],
                                   columns=["sentences"])
 
     print(sentence_statistics(test_sentence.sentences))
 
-
+    #print(nltk.help.upenn_tagset())

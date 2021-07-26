@@ -21,7 +21,8 @@ def generate_representation(df_text, model_type, model_name, batch_size, max_len
         save_path ([string], optional): path to save the representation as hdf5 file. Defaults to None.
 
     Returns:
-        [type]: [description]
+        sentence_features ([numpy-array]): extracted sentence features
+        token_features ([numpy-array]): extracted token features
     """
 
     model = RepresentationModel(
@@ -51,7 +52,7 @@ def generate_statistics(df_text):
         df_text ([dataframe]): Pandas dataframe column with text paragraphs
 
     Returns:
-        [dictionary]: python dictionary containing all computed statistics
+        df_stats ([dictionary]): python dictionary containing all computed statistics
     """
 
     # init dataframe

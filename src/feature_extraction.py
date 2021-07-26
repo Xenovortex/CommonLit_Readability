@@ -25,6 +25,7 @@ def generate_representation(df_text, model_type, model_name, batch_size, max_len
         token_features ([numpy-array]): extracted token features
     """
 
+    # init model
     model = RepresentationModel(
         model_type = model_type,
         model_name = model_name,
@@ -34,8 +35,10 @@ def generate_representation(df_text, model_type, model_name, batch_size, max_len
         last_hidden_to_use = num_hidden
     )
 
+    # generate representations
     sentence_features, token_features = model(df_text.values)
 
+    # save representation
     if save_path is not None:
         with open(save_path, 'wb') as f:
             np.save(f, sentence_features)
@@ -45,7 +48,7 @@ def generate_representation(df_text, model_type, model_name, batch_size, max_len
 
 
 
-def generate_statistics(df_text):
+def generate_statistics(df_text, save_path=None):
     """Generate statistics for a given paragraph text 
 
     Args:
@@ -108,6 +111,10 @@ def generate_statistics(df_text):
     df_pos = df_tokens.apply(nltk.pos_tag)
     df_pos_stats = count_POS_tag(df_pos)
     df_stats = pd.concat([df_stats, df_pos_stats], axis=1)
+
+    # save statistics
+    if save_path is not None:
+        df_stats.to_hdf(save_path, key='df_stats', mode='w')            
 
     return df_stats
 

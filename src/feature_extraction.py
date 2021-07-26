@@ -1,14 +1,54 @@
 import pandas as pd
+import numpy as np
 import re
 import nltk
 from collections import Counter
 import textstat
+from simplerepresentations import RepresentationModel
 
-def sentence_statistics(df_text):
-    """[summary]
+
+def generate_representation(df_text, model_type, model_name, batch_size, max_length, combine_method, num_hidden, save_path=None):
+    """Generate feature representation using the specified pretrained model
 
     Args:
-        df_sentence ([dataframe]): Pandas dataframe column with text paragraphs
+        df_text ([dataframe]): Pandas dataframe column with text paragraphs
+        model_type ([string]): model type (see HuggingFace Transformers library)
+        model_name ([string]): model name (see HuggingFace Transformers library)
+        batch_size ([int]): size of batch
+        max_length ([int]): if more tokens than max_length, truncate such that there are less than or equal max_length tokens
+        combine_method ([string]): method to combine hidden states. Options: 'cat' or 'sum'
+        num_hidden ([int]): number of last hiddent states used to generate representation
+        save_path ([string], optional): path to save the representation as hdf5 file. Defaults to None.
+
+    Returns:
+        [type]: [description]
+    """
+
+    model = RepresentationModel(
+        model_type = model_type,
+        model_name = model_name,
+        batch_size = batch_size,
+        max_seq_length = max_length,
+        combination_method = combine_method,
+        last_hidden_to_use = num_hidden
+    )
+
+    sentence_features, token_features = model(df_text.values)
+
+    if save_path is not None:
+        with open(save_path, 'wb') as f:
+            np.save(f, sentence_features)
+            np.save(f, token_features)
+
+    return sentence_features, token_features
+
+
+
+def generate_statistics(df_text):
+    """Generate statistics for a given paragraph text 
+
+    Args:
+        df_text ([dataframe]): Pandas dataframe column with text paragraphs
 
     Returns:
         [dictionary]: python dictionary containing all computed statistics
@@ -25,6 +65,9 @@ def sentence_statistics(df_text):
 
     # count words
     df_stats["num_words"] = df_text.apply(textstat.lexicon_count)
+
+    # count characters
+    df_stats["num_char"] = df_text.apply(len)
 
     # count syllables
     df_stats["num_syllables"] = df_text.apply(textstat.syllable_count)
@@ -54,7 +97,7 @@ def sentence_statistics(df_text):
     df_stats["dale_chall"] = df_text.apply(textstat.dale_chall_readability_score)
 
     # Readability Consensus
-    df_stats["combined_score"] = df_text.apply(textstat.text_standard, args=(True,))
+    df_stats["combined_score"] = df_text.apply(textstat.text_standard)
 
     # lower case
     df_text = df_text.str.lower()
@@ -64,7 +107,6 @@ def sentence_statistics(df_text):
     df_pos = df_tokens.apply(nltk.pos_tag)
     df_pos_stats = count_POS_tag(df_pos)
     df_stats = pd.concat([df_stats, df_pos_stats], axis=1)
-
 
     return df_stats
 
@@ -98,11 +140,11 @@ def count_POS_tag(df_pos):
 
 
 if __name__ == "__main__":
-    test_sentence = pd.DataFrame(data=[["This is    test-sentence number 1 with a comma ,."],
-                                  ["This is test-sentence    number ?!?! 2 with more numbers 21353215."],
-                                  ["homomorphism"], ["--"], ['"""_-()[],--?!:$;...``']],
+    test_sentence = pd.DataFrame(data=[["This is test-sentence number 1 with a comma ,."],
+                                  ["This is test-sentence number 2 with more numbers 21353215."],
+                                  ["homomorphism"]],
                                   columns=["sentences"])
 
-    print(sentence_statistics(test_sentence.sentences))
+    print(generate_representation(test_sentence.sentences, 'roberta', 'roberta-base', 128, 128, 'sum', 4))
 
     #print(nltk.help.upenn_tagset())

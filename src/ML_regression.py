@@ -25,10 +25,6 @@ def ML_regression(data, labels, method):
     elif method == "random-forest":
         reg = RandomForestRegressor().fit(data, labels)
     else:
-        raise ValueError(
-            "Regression {} is unknown. Please choose: 'linear', 'lasso', 'ridge', 'elastic-net', 'random-forest'".format(
-                method
-            )
-        )
+        raise ValueError("Regression {} is unknown. Please choose: 'linear', 'lasso', 'ridge', 'elastic-net', 'random-forest'".format(method))
 
     return reg
